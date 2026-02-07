@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connect Apple Music</title>
+
+  <!-- 1) Load MusicKit JS from Apple's CDN -->
+  <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; max-width: 720px; margin: 0 auto; }
+    button { padding: 12px 16px; font-size: 16px; cursor: pointer; }
+    pre { background: #f6f8fa; padding: 12px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Connect Apple Music</h1>
+  <p>Click the button to authorize this app to access your Apple Music listening data.</p>
+
+  <button id="connectBtn" disabled>Connect Apple Music</button>
+
+  <h3>Status</h3>
+  <pre id="status">Loading MusicKit…</pre>
+
+  <script>
+    const DEVELOPER_TOKEN = "PASTE_YOUR_DEVELOPER_TOKEN_HERE";
+    const BACKEND_BASE_URL = null
+
+    const statusEl = document.getElementById("status");
+    const connectBtn = document.getElementById("connectBtn");
+
+    function setStatus(msg, obj) {
+      statusEl.textContent = obj ? `${msg}\n\n${JSON.stringify(obj, null, 2)}` : msg;
+    }
+
+    // 2) Wait until MusicKit is loaded
+    document.addEventListener("musickitloaded", async () => {
+      try {
+        // 3) Configure MusicKit with your Developer Token
+        MusicKit.configure({
+          developerToken: DEVELOPER_TOKEN,
+          app: {
+            name: "Atlanta Concert Agent",
+            build: "1.0.0"
+          }
+        });
+
+        setStatus("MusicKit loaded. Ready to connect.");
+        connectBtn.disabled = false;
+
+      } catch (err) {
+        setStatus("Failed to configure MusicKit.", { error: String(err) });
+      }
+    });
+
+    // 4) Button click: authorize and get Music User Token
+    connectBtn.addEventListener("click", async () => {
+      connectBtn.disabled = true;
+      setStatus("Opening Apple Music authorization…");
+
+      try {
+        const music = MusicKit.getInstance();
+
+        // This prompts the Apple Music sign-in/authorization flow.
+        // On success, it returns a Music User Token.
+        const musicUserToken = await music.authorize();
+
+        setStatus("Authorized! Sending token to backend…", { musicUserTokenPreview: musicUserToken.slice(0, 20) + "…" });
+
+        // 5) POST the token to your backend
+        setStatus(
+  "Authorized! Music User Token received (not yet sent to backend).",
+  { musicUserTokenPreview: musicUserToken.slice(0, 25) + "…" }
+);
+return;
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok) {
+          throw new Error(`Backend error ${resp.status}: ${JSON.stringify(data)}`);
+        }
+
+        setStatus("Success! Token saved on backend.", data);
+
+      } catch (err) {
+        setStatus("Authorization or POST failed.", { error: String(err) });
+      } finally {
+        connectBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
